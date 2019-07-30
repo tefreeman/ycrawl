@@ -13,7 +13,8 @@ run_yelp();
 async function run_yelp() {
   await Db.init_client();
   const restaurantCol = Db.get_collection('places', 'new_restaurants');
-  const test = new RExtractor("https://www.yelp.com/search/snippet?find_desc=Restaurants&l=g%3A-86.39471041010745%2C33.79718499296451%2C-87.21319185541995%2C33.10972274220187", restaurantCol);
+  const test = new RExtractor({r_lon: -86.39471041010745, r_lat: 33.79718499296451, l_lon: -87.21319185541995, l_lat: 33.10972274220187}, restaurantCol);
+  test.start()
 }
 
 async function run() {

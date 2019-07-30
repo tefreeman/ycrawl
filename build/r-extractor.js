@@ -38,13 +38,38 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var helpers_1 = require("./helpers");
 var axios = require('axios');
 var RExtractor = /** @class */ (function () {
-    function RExtractor(url, saveToCol) {
-        this.url = url;
+    function RExtractor(coords, saveToCol) {
+        this.coords = coords;
         this.saveToCol = saveToCol;
-        this.currentPage = 0;
-        this.processAll();
+        this.urlCoords = [];
+        this.baseUrl = "https://www.yelp.com/search";
+        this.urlCoords.push(coords);
     }
-    RExtractor.prototype.processAll = function () {
+    RExtractor.prototype.start = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var coords, result, newCoords;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!(this.urlCoords.length > 0)) return [3 /*break*/, 2];
+                        coords = this.urlCoords[0];
+                        return [4 /*yield*/, this.processAll(this.urlQueryBuilder(coords))];
+                    case 1:
+                        result = _a.sent();
+                        if (result === 'split') {
+                            newCoords = this.splitCoords(coords);
+                            this.urlCoords.splice(0, 1, newCoords[0], newCoords[1]);
+                        }
+                        else if (result === 'done') {
+                            this.urlCoords.shift();
+                        }
+                        return [3 /*break*/, 0];
+                    case 2: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    RExtractor.prototype.processAll = function (url) {
         return __awaiter(this, void 0, void 0, function () {
             var pageNum, val;
             return __generator(this, function (_a) {
@@ -54,12 +79,18 @@ var RExtractor = /** @class */ (function () {
                         _a.label = 1;
                     case 1:
                         if (!true) return [3 /*break*/, 3];
-                        return [4 /*yield*/, this.processUrl(pageNum)];
+                        return [4 /*yield*/, this.processUrl(url, pageNum)];
                     case 2:
                         val = _a.sent();
                         if (val === -1) {
                             console.log('processed: ', (pageNum) + val, ' restaurants');
-                            return [3 /*break*/, 3];
+                            return [2 /*return*/, 'done'];
+                        }
+                        else {
+                            // results is over 1000 -> split into two coords query
+                            if (val === -2) {
+                                return [2 /*return*/, 'split'];
+                            }
                         }
                         pageNum += 30;
                         console.log(pageNum);
@@ -69,12 +100,12 @@ var RExtractor = /** @class */ (function () {
             });
         });
     };
-    RExtractor.prototype.processUrl = function (num) {
+    RExtractor.prototype.processUrl = function (url, num) {
         return __awaiter(this, void 0, void 0, function () {
-            var page, data, exception, mapProps, biz, filtredBiz, bizJson_1;
+            var page, data, exception, paginationInfo, mapProps, biz, filtredBiz, bizJson_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.getPage(num)];
+                    case 0: return [4 /*yield*/, this.getPage(url, num)];
                     case 1:
                         page = _a.sent();
                         data = page.data;
@@ -87,6 +118,10 @@ var RExtractor = /** @class */ (function () {
                         catch (e) {
                         }
                         try {
+                            paginationInfo = helpers_1.Helpers.get_prop('searchPageProps.searchResultsProps.paginationInfo', data);
+                            if (paginationInfo['totalResults'] > 990) {
+                                return [2 /*return*/, -2];
+                            }
                             mapProps = helpers_1.Helpers.get_prop('searchPageProps.searchMapProps.mapState.markers', data);
                             biz = helpers_1.Helpers.get_prop('searchPageProps.searchResultsProps.searchResults', data);
                             filtredBiz = this.filterBusinesses(biz);
@@ -103,19 +138,41 @@ var RExtractor = /** @class */ (function () {
             });
         });
     };
-    RExtractor.prototype.getPage = function (pageNum) {
+    RExtractor.prototype.getPage = function (url, pageNum) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         if (!(pageNum > 0)) return [3 /*break*/, 2];
-                        return [4 /*yield*/, axios.get(this.url + "&start=" + pageNum.toString())];
+                        return [4 /*yield*/, axios.get(url + "&start=" + pageNum.toString())];
                     case 1: return [2 /*return*/, _a.sent()];
-                    case 2: return [4 /*yield*/, axios.get(this.url)];
+                    case 2: return [4 /*yield*/, axios.get(url)];
                     case 3: return [2 /*return*/, _a.sent()];
                 }
             });
         });
+    };
+    RExtractor.prototype.splitCoords = function (coords) {
+        var midLon = (coords.l_lon - coords.r_lon) / 2;
+        var midLat = (coords.l_lat - coords.r_lat) / 2;
+        var coords1 = {
+            r_lon: coords.r_lon,
+            r_lat: coords.r_lat,
+            l_lon: coords.r_lon + midLon,
+            l_lat: coords.r_lat + midLat
+        };
+        var coords2 = {
+            r_lon: coords.r_lon + midLon,
+            r_lat: coords.r_lat + midLat,
+            l_lon: coords.l_lon,
+            l_lat: coords.l_lat
+        };
+        return [coords1, coords2];
+    };
+    RExtractor.prototype.urlQueryBuilder = function (coords) {
+        var coordString = encodeURIComponent('g:' + coords.r_lon.toString() + ',' + coords.r_lat.toString()
+            + ',' + coords.l_lon.toString() + ',' + coords.l_lat.toString());
+        return this.baseUrl + '/snippet?' + 'find_desc=Restaurants' + '&l=' + coordString;
     };
     RExtractor.prototype.merge_markers_with_biz = function (bizs, mapProps) {
         var biz_key_tree = {};

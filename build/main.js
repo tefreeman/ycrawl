@@ -51,7 +51,8 @@ function run_yelp() {
                 case 1:
                     _a.sent();
                     restaurantCol = Db.get_collection('places', 'new_restaurants');
-                    test = new r_extractor_1.RExtractor("https://www.yelp.com/search/snippet?find_desc=Restaurants&l=g%3A-86.39471041010745%2C33.79718499296451%2C-87.21319185541995%2C33.10972274220187", restaurantCol);
+                    test = new r_extractor_1.RExtractor({ r_lon: -86.39471041010745, r_lat: 33.79718499296451, l_lon: -87.21319185541995, l_lat: 33.10972274220187 }, restaurantCol);
+                    test.start();
                     return [2 /*return*/];
             }
         });
