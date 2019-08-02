@@ -3,7 +3,7 @@ import {Helpers} from "./helpers";
 
 const axios = require('axios');
 
-export class RExtractor {
+export class YelpSearchExtractor {
 
   private urlCoords = [];
   private baseUrl = "https://www.yelp.com/search";
@@ -63,7 +63,7 @@ export class RExtractor {
 
     try {
       const paginationInfo = Helpers.get_prop('searchPageProps.searchResultsProps.paginationInfo', data);
-
+      console.log(paginationInfo['totalResults']);
       if (paginationInfo['totalResults'] > 990) {
         return -2;
       }
@@ -81,6 +81,7 @@ export class RExtractor {
 
     } catch (e) {
       console.log(e);
+      return -1;
     }
   }
 
@@ -96,16 +97,15 @@ export class RExtractor {
 
   private splitCoords(coords: { l_lon: number, l_lat: number, r_lon: number, r_lat: number }) {
     const midLon = (coords.l_lon - coords.r_lon) / 2;
-    const midLat = (coords.l_lat - coords.r_lat) / 2;
     const coords1 = {
       r_lon: coords.r_lon,
       r_lat: coords.r_lat,
       l_lon: coords.r_lon + midLon,
-      l_lat: coords.r_lat + midLat
+      l_lat: coords.l_lat,
     };
     const coords2 = {
       r_lon: coords.r_lon + midLon,
-      r_lat: coords.r_lat + midLat,
+      r_lat: coords.r_lat,
       l_lon: coords.l_lon,
       l_lat: coords.l_lat
     };

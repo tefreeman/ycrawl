@@ -119,6 +119,7 @@ var RExtractor = /** @class */ (function () {
                         }
                         try {
                             paginationInfo = helpers_1.Helpers.get_prop('searchPageProps.searchResultsProps.paginationInfo', data);
+                            console.log(paginationInfo['totalResults']);
                             if (paginationInfo['totalResults'] > 990) {
                                 return [2 /*return*/, -2];
                             }
@@ -132,6 +133,7 @@ var RExtractor = /** @class */ (function () {
                         }
                         catch (e) {
                             console.log(e);
+                            return [2 /*return*/, -1];
                         }
                         return [2 /*return*/];
                 }
@@ -154,16 +156,15 @@ var RExtractor = /** @class */ (function () {
     };
     RExtractor.prototype.splitCoords = function (coords) {
         var midLon = (coords.l_lon - coords.r_lon) / 2;
-        var midLat = (coords.l_lat - coords.r_lat) / 2;
         var coords1 = {
             r_lon: coords.r_lon,
             r_lat: coords.r_lat,
             l_lon: coords.r_lon + midLon,
-            l_lat: coords.r_lat + midLat
+            l_lat: coords.l_lat,
         };
         var coords2 = {
             r_lon: coords.r_lon + midLon,
-            r_lat: coords.r_lat + midLat,
+            r_lat: coords.r_lat,
             l_lon: coords.l_lon,
             l_lat: coords.l_lat
         };

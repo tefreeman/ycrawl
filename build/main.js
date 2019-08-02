@@ -37,8 +37,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var database_1 = require("./database");
 var helpers_1 = require("./helpers");
-var extractor_1 = require("./extractor");
-var r_extractor_1 = require("./r-extractor");
+var yelp_detailed_extractor_1 = require("./yelp-detailed-extractor");
+var yelp_search_extractor_1 = require("./yelp-search-extractor");
 var axios = require("axios");
 var Db = new database_1.Database('71.82.19.242', '27017', 'admin', '***REMOVED***');
 run_yelp();
@@ -51,7 +51,12 @@ function run_yelp() {
                 case 1:
                     _a.sent();
                     restaurantCol = Db.get_collection('places', 'new_restaurants');
-                    test = new r_extractor_1.RExtractor({ r_lon: -86.39471041010745, r_lat: 33.79718499296451, l_lon: -87.21319185541995, l_lat: 33.10972274220187 }, restaurantCol);
+                    test = new yelp_search_extractor_1.YelpSearchExtractor({
+                        r_lon: -86.39471041010745,
+                        r_lat: 33.79718499296451,
+                        l_lon: -87.21319185541995,
+                        l_lat: 33.10972274220187
+                    }, restaurantCol);
                     test.start();
                     return [2 /*return*/];
             }
@@ -66,8 +71,8 @@ function run() {
                 case 0: return [4 /*yield*/, Db.init_client()];
                 case 1:
                     _c.sent();
-                    restaurantCol = Db.get_collection('places', 'old_resturants');
-                    return [4 /*yield*/, helpers_1.Helpers.resturants_near(-86.70478820800781, 33.485290098289475, 5000, 1, restaurantCol)];
+                    restaurantCol = Db.get_collection('places', 'new_restaurants');
+                    return [4 /*yield*/, helpers_1.Helpers.resturants_near(-86.70478820800781, 33.485290098289475, 50000, 1, restaurantCol)];
                 case 2:
                     restaurants = _c.sent();
                     _i = 0, restaurants_1 = restaurants;
@@ -75,17 +80,15 @@ function run() {
                 case 3:
                     if (!(_i < restaurants_1.length)) return [3 /*break*/, 7];
                     restaurant = restaurants_1[_i];
-                    extractor = new extractor_1.Extractor(restaurant);
+                    extractor = new yelp_detailed_extractor_1.YelpDetailedExtractor(restaurant);
                     _a = restaurant;
-                    _b = 'menuData';
+                    _b = 'detailedData';
                     return [4 /*yield*/, extractor.get_data()];
                 case 4:
                     _a[_b] = _c.sent();
-                    restaurant['hasMenu'] = true;
                     return [4 /*yield*/, restaurantCol.replaceOne({ _id: restaurant['_id'] }, restaurant)];
                 case 5:
                     result = _c.sent();
-                    console.log(result);
                     _c.label = 6;
                 case 6:
                     _i++;

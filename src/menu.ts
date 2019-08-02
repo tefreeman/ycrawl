@@ -1,5 +1,5 @@
 export class Menu {
-  menu = {};
+  public menu = {};
   curMenu = "";
   curSection = "";
 

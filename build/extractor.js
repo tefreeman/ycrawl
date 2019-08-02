@@ -46,7 +46,7 @@ var Extractor = /** @class */ (function () {
         this.$ = null;
         this.menu = new menu_1.Menu();
         this.url = "";
-        this.url = helpers_1.Helpers.buildMenuUrl(this.baseUrl, restaurant_doc.businessUrl);
+        this.url = helpers_1.Helpers.buildYelpMenuUrl(this.baseUrl, restaurant_doc.businessUrl);
     }
     Extractor.prototype.get_data = function () {
         return __awaiter(this, void 0, void 0, function () {
@@ -185,7 +185,7 @@ var Extractor = /** @class */ (function () {
                 else {
                     links.push({
                         name: menu.text(),
-                        url: helpers_1.Helpers.buildMenuUrl(this.baseUrl, this.restaurant_doc.businessUrl) + "/" + menu.text()
+                        url: helpers_1.Helpers.buildYelpMenuUrl(this.baseUrl, this.restaurant_doc.businessUrl) + "/" + menu.text()
                     });
                 }
             }
@@ -193,7 +193,7 @@ var Extractor = /** @class */ (function () {
         else {
             links.push({
                 name: "main-menu",
-                url: helpers_1.Helpers.buildMenuUrl(this.baseUrl, this.restaurant_doc.businessUrl) + "/" + "main-menu"
+                url: helpers_1.Helpers.buildYelpMenuUrl(this.baseUrl, this.restaurant_doc.businessUrl) + "/" + "main-menu"
             });
         }
         return links;
