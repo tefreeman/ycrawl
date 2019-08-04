@@ -25,6 +25,9 @@ var Helpers = /** @class */ (function () {
     // Distance in meters
     Helpers.resturants_near = function (lon, lat, maxDist, minDist, col) {
         return col.find({
+            "hasDetails": {
+                $not: { $eq: true }
+            },
             "location.coordinates": {
                 $near: {
                     $geometry: {

@@ -39,9 +39,20 @@ var database_1 = require("./database");
 var helpers_1 = require("./helpers");
 var yelp_detailed_extractor_1 = require("./yelp-detailed-extractor");
 var yelp_search_extractor_1 = require("./yelp-search-extractor");
+var grubhub_extractor_1 = require("./grubhub-extractor");
 var axios = require("axios");
 var Db = new database_1.Database('71.82.19.242', '27017', 'admin', '***REMOVED***');
-run_yelp();
+function run_grubhub(loc) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            Db.init_client().then(function () {
+                var col = Db.get_collection('places', 'grubhub');
+                var test = new grubhub_extractor_1.GrubhubExtractor(loc, col, 500);
+            });
+            return [2 /*return*/];
+        });
+    });
+}
 function run_yelp() {
     return __awaiter(this, void 0, void 0, function () {
         var restaurantCol, test;
@@ -50,45 +61,49 @@ function run_yelp() {
                 case 0: return [4 /*yield*/, Db.init_client()];
                 case 1:
                     _a.sent();
-                    restaurantCol = Db.get_collection('places', 'new_restaurants');
+                    restaurantCol = Db.get_collection('places', 'yelp');
                     test = new yelp_search_extractor_1.YelpSearchExtractor({
                         r_lon: -86.39471041010745,
                         r_lat: 33.79718499296451,
                         l_lon: -87.21319185541995,
                         l_lat: 33.10972274220187
-                    }, restaurantCol);
+                    }, restaurantCol, 1500);
                     test.start();
                     return [2 /*return*/];
             }
         });
     });
 }
-function run() {
+function run_detailed_yelp() {
     return __awaiter(this, void 0, void 0, function () {
-        var restaurantCol, restaurants, _i, restaurants_1, restaurant, extractor, _a, _b, result;
+        var restaurantCol, restaurants, count, _i, restaurants_1, restaurant, extractor, _a, _b, result;
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0: return [4 /*yield*/, Db.init_client()];
                 case 1:
                     _c.sent();
-                    restaurantCol = Db.get_collection('places', 'new_restaurants');
-                    return [4 /*yield*/, helpers_1.Helpers.resturants_near(-86.70478820800781, 33.485290098289475, 50000, 1, restaurantCol)];
+                    restaurantCol = Db.get_collection('places', 'yelp');
+                    return [4 /*yield*/, helpers_1.Helpers.resturants_near(-86.70478820800781, 33.485290098289475, 5000000, 1, restaurantCol)];
                 case 2:
                     restaurants = _c.sent();
+                    count = 0;
                     _i = 0, restaurants_1 = restaurants;
                     _c.label = 3;
                 case 3:
                     if (!(_i < restaurants_1.length)) return [3 /*break*/, 7];
                     restaurant = restaurants_1[_i];
-                    extractor = new yelp_detailed_extractor_1.YelpDetailedExtractor(restaurant);
+                    extractor = new yelp_detailed_extractor_1.YelpDetailedExtractor(restaurant, 1500);
                     _a = restaurant;
                     _b = 'detailedData';
                     return [4 /*yield*/, extractor.get_data()];
                 case 4:
                     _a[_b] = _c.sent();
+                    restaurant['hasDetails'] = true;
                     return [4 /*yield*/, restaurantCol.replaceOne({ _id: restaurant['_id'] }, restaurant)];
                 case 5:
                     result = _c.sent();
+                    count += 1;
+                    console.log('processed: ', count);
                     _c.label = 6;
                 case 6:
                     _i++;
@@ -98,4 +113,7 @@ function run() {
         });
     });
 }
+run_detailed_yelp().then(function () {
+    console.log('done');
+});
 //# sourceMappingURL=main.js.map

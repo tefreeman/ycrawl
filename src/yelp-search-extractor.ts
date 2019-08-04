@@ -1,5 +1,6 @@
 import {Collection} from "mongodb";
 import {Helpers} from "./helpers";
+import {MaxRequests} from "./max-requests";
 
 const axios = require('axios');
 
@@ -7,12 +8,16 @@ export class YelpSearchExtractor {
 
   private urlCoords = [];
   private baseUrl = "https://www.yelp.com/search";
+  private keys = new Set();
+  private MaxReq: MaxRequests;
 
-  constructor(private coords: { l_lon: number, l_lat: number, r_lon: number, r_lat: number }, private saveToCol: Collection) {
+  constructor(private coords: { l_lon: number, l_lat: number, r_lon: number, r_lat: number }, private saveToCol: Collection, maxReqPerHour: number) {
     this.urlCoords.push(coords);
+    this.MaxReq = new MaxRequests(maxReqPerHour);
   }
 
   async start() {
+    await this.addkeys('id');
     while (this.urlCoords.length > 0) {
       const coords = this.urlCoords[0];
 
@@ -24,7 +29,7 @@ export class YelpSearchExtractor {
         this.urlCoords.shift();
       }
     }
-
+return
   }
 
   async processAll(url: string) {
@@ -74,9 +79,18 @@ export class YelpSearchExtractor {
       const filtredBiz = this.filterBusinesses(biz);
 
       const bizJson = this.merge_markers_with_biz(filtredBiz, mapProps);
+      const len = bizJson.length;
+      bizJson.filter((r) => {
+        return !this.keys.has(r['id'])
+      });
 
+      bizJson.forEach((r) => {
+        r['hasDetails'] = false;
+      });
+
+      console.log('Yelp: inserted: ', bizJson.length, ' ', len - bizJson.length, 'duplicates not added')
       return this.saveToCol.insertMany(bizJson).then(() => {
-        return bizJson.length;
+        return len;
       })
 
     } catch (e) {
@@ -86,6 +100,7 @@ export class YelpSearchExtractor {
   }
 
   async getPage(url: string, pageNum: number) {
+    const done = await this.MaxReq.waitTillReady();
     if (pageNum > 0) {
       return await axios.get(url + "&start=" + pageNum.toString());
     } else {
@@ -93,6 +108,14 @@ export class YelpSearchExtractor {
     }
 
 
+  }
+
+  private async addkeys(prop: string) {
+    return this.saveToCol.find({}).forEach((restaurant) => {
+      this.keys.add(restaurant[prop])
+    }).then(() => {
+      return;
+    })
   }
 
   private splitCoords(coords: { l_lon: number, l_lat: number, r_lon: number, r_lat: number }) {

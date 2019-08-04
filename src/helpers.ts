@@ -40,7 +40,10 @@ export class Helpers {
   // Distance in meters
   static resturants_near(lon, lat, maxDist, minDist, col: Mongo.Collection) {
     return col.find({
-        "location.coordinates": {
+        "hasDetails": {
+          $not: {$eq: true}
+        },
+      "location.coordinates": {
           $near: {
             $geometry: {
               type: "Point", coordinates: [lon, lat]

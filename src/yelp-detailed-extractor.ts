@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio"
 import {Helpers, ISelector} from "./helpers";
 import {Menu} from "./menu";
+import {MaxRequests} from "./max-requests";
 
 const axios = require("axios");
 
@@ -9,27 +10,24 @@ export class YelpDetailedExtractor {
   menu = new Menu();
   private menuUrl = "";
   private bizUrl = "";
+  private MaxReq: MaxRequests;
 
-  constructor(private restaurant_doc: any) {
+  constructor(private restaurant_doc: any, maxReqPerHour: number) {
+    this.MaxReq = new MaxRequests(maxReqPerHour);
     this.menuUrl = Helpers.buildYelpMenuUrl(this.baseUrl, restaurant_doc.businessUrl);
     this.bizUrl = this.baseUrl + restaurant_doc.businessUrl;
+
   }
 
-  private static async fetchData(url: string) {
-    console.log(url);
-    const result = await axios.get(url);
-    return cheerio.load(result.data);
-  };
-
   public async get_data() {
-    const bizPage = await YelpDetailedExtractor.fetchData(this.bizUrl);
+    const bizPage = await this.fetchData(this.bizUrl);
     const bizData = this.extractBizData(bizPage);
 
     if (bizPage('.menu-explore').length > 0) {
-      const menuPage = await YelpDetailedExtractor.fetchData(this.menuUrl);
+      const menuPage = await this.fetchData(this.menuUrl);
       const menus = this.getMenus(menuPage);
       for (const menuObj of menus) {
-        const selectedMenuData = await YelpDetailedExtractor.fetchData(menuObj.url);
+        const selectedMenuData = await this.fetchData(menuObj.url);
         const menuSection = this.getMenuSection(selectedMenuData);
 
         if (menuSection.length > 0) {
@@ -44,6 +42,12 @@ export class YelpDetailedExtractor {
     }
     return bizData;
   }
+
+  private async fetchData(url: string) {
+    await this.MaxReq.waitTillReady();
+    const result = await axios.get(url);
+    return cheerio.load(result.data);
+  };
 
   private getMenuSection(menuData: CheerioStatic) {
     return menuData('.biz-menu');
