@@ -136,7 +136,3 @@ npm run start
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-This project provides a robust way to gather restaurant data from multiple sources. Feel free to contribute by submitting issues or pull requests!
